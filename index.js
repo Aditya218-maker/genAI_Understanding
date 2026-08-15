@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import readline from 'readline/promises'; //to take user input 
 import { ChatMistralAI } from '@langchain/mistralai';
+import { sendEmail } from './mail.service.js';
 
 // by default AI k pass chat history nahi hoti that means wo current chat se pehle wle chat ko bhool jata hai 
 // for that we import these packages 
