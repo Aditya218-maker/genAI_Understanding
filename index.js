@@ -40,18 +40,17 @@ const messages = [];
 
 while(true) {
     const userInput = await rl.question("\x1b[32mYou:\x1b[0m ")  
-//will use colours to show chats
+
 
     messages.push(new HumanMessage(userInput)) 
 
-    //agent provides whole history not just a message
+    //by default agent provides whole history not just a message
     const response = await agent.invoke({messages}) 
 
-    messages.push(response)
+    messages.push(response.messages[response.messages.length-1])
 
+   
     console.log(response)
-
-    // console.log(`\x1b[34m[AI]\x1b[0m ${response.content}`)
 }
 
 rl.close();  
