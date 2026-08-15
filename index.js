@@ -1,11 +1,23 @@
 import 'dotenv/config';
-import readline from 'readline/promises'; //to take user input 
+import readline from 'readline/promises'; 
 import { ChatMistralAI } from '@langchain/mistralai';
+import { HumanMessage, tool, createAgent } from 'langchain'
+import * as z from "zod";
 import { sendEmail } from './mail.service.js';
 
-// by default AI k pass chat history nahi hoti that means wo current chat se pehle wle chat ko bhool jata hai 
-// for that we import these packages 
-import { HumanMessage } from 'langchain'
+
+const EmailTool = tool(
+    sendEmail,
+    {
+        name:"Emailtool",
+        description: "Use this tool to send an Email.",
+        schema: z.object({
+            to: z.string().describe("The recipient's Email adress"),
+            html: z.string().describe("The HTML content of the Email"),
+            subject: z.string().describe("The subject of the Email")
+        })
+    }
+)
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -13,30 +25,35 @@ const rl = readline.createInterface({
 })
 
 const model = new ChatMistralAI({
-  model: 'mistral-small-latest' //use small models
-
+  model: 'mistral-small-latest' 
 })
 
-const messages = []; //to maintain. chat history
+//An agent is a model calling tools in a loop until a given task is complete.
+const agent = createAgent(
+    { 
+        model, 
+        tools : [ EmailTool ]
+    }
+);
 
+const messages = []; 
 
-// ye loop infinte times chalega 
-// matlab jab tak 
 while(true) {
-    const userInput = await rl.question("\x1b[32mYou:\x1b[0m ")  //user se input liya aur userInput constant me save kiya
+    const userInput = await rl.question("\x1b[32mYou:\x1b[0m ")  
 //will use colours to show chats
 
-    messages.push(new HumanMessage(userInput)) //naye user input ko messages array me daal do
+    messages.push(new HumanMessage(userInput)) 
 
-    const response = await model.invoke(messages) 
-    //ab server chat history maintain krne k liye pure messgaes arrya ko hi Ai k paas bhejega
-    //aur ai pure convo history ko dekh pata hai
+    //agent provides whole history not just a message
+    const response = await agent.invoke({messages}) 
 
-    messages.push(response) // naye ai response ko messages array me daaldo
-    
-    console.log(`\x1b[34m[AI]\x1b[0m ${response.content}`)
+    messages.push(response)
+
+    console.log(response)
+
+    // console.log(`\x1b[34m[AI]\x1b[0m ${response.content}`)
 }
 
-rl.close();  //stop taking user input 
+rl.close();  
 
 
